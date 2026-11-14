@@ -3,22 +3,29 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Semester 5 Hub — Notion Study Workspace</title>
-  <!-- Tailwind CSS & Lucide Icons -->
+  <title>FLSHM S5 • GR02 — English Studies Command Center</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script>
     tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+            serif: ['Instrument Serif', 'serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
           colors: {
-            notion: {
-              bg: '#191919',
-              sidebar: '#202020',
-              card: '#252525',
-              border: '#2f2f2f',
-              accent: '#6366f1'
+            obsidian: {
+              950: '#09090b',
+              900: '#101014',
+              850: '#16161d',
+              800: '#1c1c26',
+              700: '#272735',
             }
           }
         }
@@ -26,379 +33,309 @@
     };
   </script>
   <style>
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #191919; }
-    ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #555; }
+    :root {
+      --border-subtle: rgba(255, 255, 255, 0.07);
+      --border-glow: rgba(99, 102, 241, 0.35);
+    }
+    body {
+      background-color: #09090b;
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.08) 0px, transparent 45%),
+        radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.06) 0px, transparent 45%);
+    }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+    .glass-panel {
+      background: rgba(16, 16, 20, 0.78);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-subtle);
+    }
+    .card-hover {
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .card-hover:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255,255,255,0.16);
+      box-shadow: 0 12px 32px -10px rgba(0,0,0,0.6);
+    }
+    @keyframes eqBar {
+      0%, 100% { height: 4px; }
+      50% { height: 14px; }
+    }
+    .eq-bar { animation: eqBar 0.8s ease-in-out infinite; }
+    .eq-bar:nth-child(2) { animation-delay: 0.2s; }
+    .eq-bar:nth-child(3) { animation-delay: 0.4s; }
+    .eq-paused .eq-bar { animation: none; height: 4px; }
   </style>
 </head>
-<body class="bg-notion-bg text-zinc-200 font-sans h-screen flex flex-col overflow-hidden select-none">
+<body class="text-zinc-200 font-sans h-screen flex flex-col overflow-hidden selection:bg-indigo-500/30 selection:text-indigo-200">
 
-  <!-- MAIN WORKSPACE -->
-  <div class="flex flex-1 overflow-hidden">
-
-    <!-- LEFT SIDEBAR: 6 MODULES NAVIGATION -->
-    <aside id="sidebar" class="w-72 bg-notion-sidebar border-r border-notion-border flex flex-col justify-between transition-all duration-300 shrink-0">
-      <div class="p-4 overflow-y-auto flex-1">
-        <!-- Workspace Header -->
-        <div class="flex items-center gap-3 px-2 py-2 mb-4 rounded-lg bg-zinc-800/60 border border-notion-border">
-          <div class="w-8 h-8 rounded-md bg-indigo-600 flex items-center justify-center font-bold text-white shadow">
-            S5
-          </div>
-          <div>
-            <h1 class="text-sm font-semibold text-white leading-tight">Semester 5 Hub</h1>
-            <p class="text-[11px] text-zinc-400">6 Core Modules • Premium</p>
-          </div>
-        </div>
-
-        <!-- Quick Search -->
-        <div class="relative mb-4">
-          <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-zinc-500"></i>
-          <input id="searchInput" type="text" placeholder="Search lessons or summaries..." 
-            class="w-full bg-zinc-900/90 border border-notion-border rounded-lg pl-9 pr-3 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-indigo-500"
-            oninput="filterModules(this.value)" />
-        </div>
-
-        <!-- Modules List Container -->
-        <div class="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 px-2 mb-2">
-          Semester 5 Modules
-        </div>
-        <nav id="moduleNav" class="space-y-1"></nav>
+  <!-- ===================================================================== -->
+  <!-- COMMAND PALETTE MODAL (CTRL + K)                                      -->
+  <!-- ===================================================================== -->
+  <div id="cmdModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden items-start justify-center pt-24 px-4" onclick="if(event.target===this) toggleCmdPalette()">
+    <div class="w-full max-w-xl bg-obsidian-900 border border-white/15 rounded-2xl shadow-2xl overflow-hidden">
+      <div class="flex items-center px-4 py-3 border-b border-white/10 gap-3">
+        <i data-lucide="search" class="w-4 h-4 text-indigo-400"></i>
+        <input id="cmdInput" type="text" placeholder="Jump to any S5 module, professor, room, or tool..." 
+          class="w-full bg-transparent text-sm text-white focus:outline-none font-sans"
+          oninput="renderCmdResults(this.value)" />
+        <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/5 text-zinc-400 border border-white/10">ESC</span>
       </div>
+      <div id="cmdResults" class="max-h-80 overflow-y-auto p-2 space-y-1"></div>
+    </div>
+  </div>
 
-      <!-- Sidebar Footer: Quick Tool Triggers -->
-      <div class="p-3 border-t border-notion-border space-y-1.5 bg-zinc-900/40">
-        <button onclick="openDrawer('spider')" class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium bg-indigo-600/15 text-indigo-300 hover:bg-indigo-600/25 border border-indigo-500/30 transition">
-          <span class="flex items-center gap-2"><i data-lucide="globe" class="w-4 h-4"></i> Spider-Crawler Summarizer</span>
-          <span class="text-[10px] bg-indigo-500/30 px-1.5 py-0.5 rounded">PRO</span>
-        </button>
-        <button onclick="openDrawer('ai')" class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium bg-emerald-600/15 text-emerald-300 hover:bg-emerald-600/25 border border-emerald-500/30 transition">
-          <span class="flex items-center gap-2"><i data-lucide="bot" class="w-4 h-4"></i> 24/7 AI Study Agent</span>
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        </button>
-      </div>
-    </aside>
+  <!-- ===================================================================== -->
+  <!-- MAIN APP LAYOUT                                                       -->
+  <!-- ===================================================================== -->
+  <div class="flex flex-1 overflow-hidden relative">
 
-    <!-- CENTER: NOTION-STYLE LESSON VIEW -->
-    <main class="flex-1 flex flex-col overflow-y-auto select-text">
-      <!-- Top Breadcrumb Bar -->
-      <header class="h-12 border-b border-notion-border px-6 flex items-center justify-between sticky top-0 bg-notion-bg/90 backdrop-blur z-10">
-        <div class="flex items-center gap-2 text-xs text-zinc-400">
-          <span id="breadcrumbModule" class="hover:text-white cursor-pointer">Module 1</span>
-          <span>/</span>
-          <span id="breadcrumbLesson" class="text-zinc-100 font-medium">Lesson 1</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <button onclick="openDrawer('spider')" class="px-2.5 py-1 rounded text-xs bg-notion-card hover:bg-zinc-700 border border-notion-border flex items-center gap-1.5">
-            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-indigo-400"></i> Summarize Page
-          </button>
-          <button onclick="openDrawer('ai')" class="px-2.5 py-1 rounded text-xs bg-notion-card hover:bg-zinc-700 border border-notion-border flex items-center gap-1.5">
-            <i data-lucide="message-square" class="w-3.5 h-3.5 text-emerald-400"></i> Ask AI
-          </button>
-        </div>
-      </header>
-
-      <!-- Lesson Content Container -->
-      <div class="max-w-4xl w-full mx-auto px-8 py-8 flex-1">
-        <!-- Module Tag & Title -->
-        <div class="mb-6">
-          <span id="lessonBadge" class="inline-block text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 mb-3">
-            Module 1
-          </span>
-          <h2 id="lessonTitle" class="text-3xl font-bold text-white tracking-tight"></h2>
-        </div>
-
-        <!-- Notion-Style Sub-Navigation Tabs -->
-        <div class="flex items-center gap-2 border-b border-notion-border mb-6">
-          <button onclick="switchLessonTab('notes')" id="tab-notes" class="lesson-tab px-4 py-2 text-xs font-medium border-b-2 border-indigo-500 text-white flex items-center gap-1.5">
-            <i data-lucide="book-open" class="w-3.5 h-3.5"></i> Written Lesson
-          </button>
-          <button onclick="switchLessonTab('summary')" id="tab-summary" class="lesson-tab px-4 py-2 text-xs font-medium border-b-2 border-transparent text-zinc-400 hover:text-white flex items-center gap-1.5">
-            <i data-lucide="zap" class="w-3.5 h-3.5"></i> Quick Summary
-          </button>
-          <button onclick="switchLessonTab('video')" id="tab-video" class="lesson-tab px-4 py-2 text-xs font-medium border-b-2 border-transparent text-zinc-400 hover:text-white flex items-center gap-1.5">
-            <i data-lucide="play-circle" class="w-3.5 h-3.5"></i> Video Lecture
-          </button>
-          <button onclick="switchLessonTab('pics')" id="tab-pics" class="lesson-tab px-4 py-2 text-xs font-medium border-b-2 border-transparent text-zinc-400 hover:text-white flex items-center gap-1.5">
-            <i data-lucide="image" class="w-3.5 h-3.5"></i> Diagrams & Pics
-          </button>
-        </div>
-
-        <!-- Dynamic Tab Body -->
-        <div id="lessonBody" class="space-y-6 text-sm leading-relaxed text-zinc-300"></div>
-      </div>
-    </main>
-
-    <!-- RIGHT DRAWER: SPIDER-CRAWLER & 24/7 AI STUDY AGENT -->
-    <aside id="rightDrawer" class="w-[460px] bg-notion-sidebar border-l border-notion-border flex flex-col transition-all duration-300 hidden shrink-0">
-      <!-- Drawer Header -->
-      <div class="h-12 border-b border-notion-border px-4 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <button onclick="openDrawer('spider')" id="drawerTabSpider" class="px-3 py-1 rounded-md text-xs font-medium bg-indigo-600 text-white">
-            Spider-Crawler
-          </button>
-          <button onclick="openDrawer('ai')" id="drawerTabAi" class="px-3 py-1 rounded-md text-xs font-medium text-zinc-400 hover:text-white">
-            24/7 Study AI
-          </button>
-        </div>
-        <button onclick="closeDrawer()" class="text-zinc-400 hover:text-white p-1">
-          <i data-lucide="x" class="w-4 h-4"></i>
-        </button>
-      </div>
-
-      <!-- View 1: Spider-Crawler Embedded Iframe -->
-      <div id="drawerSpiderView" class="flex-1 flex flex-col">
-        <div class="px-4 py-2 bg-zinc-900/70 border-b border-notion-border flex items-center justify-between text-[11px] text-zinc-400">
-          <span>Live Tool: <strong>lulu38m.github.io/spider-crawler</strong></span>
-          <a href="https://lulu38m.github.io/spider-crawler/" target="_blank" class="text-indigo-400 hover:underline flex items-center gap-1">
-            Open Fullscreen <i data-lucide="external-link" class="w-3 h-3"></i>
-          </a>
-        </div>
-        <iframe 
-          src="https://lulu38m.github.io/spider-crawler/" 
-          class="w-full flex-1 bg-white"
-          allow="clipboard-read; clipboard-write">
-        </iframe>
-      </div>
-
-      <!-- View 2: 24/7 AI Study Agent -->
-      <div id="drawerAiView" class="flex-1 flex flex-col hidden overflow-hidden">
-        <div class="p-3 bg-emerald-950/30 border-b border-emerald-500/20 text-xs text-emerald-200 flex items-center gap-2">
-          <i data-lucide="sparkles" class="w-4 h-4 text-emerald-400 shrink-0"></i>
-          <span>I know all 6 Semester 5 modules! Ask me to explain a topic or recommend a lesson.</span>
-        </div>
-
-        <!-- Chat Messages -->
-        <div id="chatMessages" class="flex-1 p-4 overflow-y-auto space-y-3 text-xs select-text">
-          <div class="bg-notion-card border border-notion-border p-3 rounded-xl text-zinc-200">
-            👋 Hey! I'm your **Semester 5 AI Tutor**. Ask me about any of your 6 modules, or click a quick prompt below:
-            <div class="mt-2 flex flex-wrap gap-1.5">
-              <button onclick="sendQuickPrompt('Recommend what I should study first')" class="px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-indigo-300 border border-notion-border">What should I study first?</button>
-              <button onclick="sendQuickPrompt('Summarize the current lesson')" class="px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-indigo-300 border border-notion-border">Summarize current lesson</button>
+    <!-- LEFT SIDEBAR -->
+    <aside id="sidebar" class="w-72 glass-panel border-r border-white/[0.07] flex flex-col justify-between shrink-0 z-20 transition-all duration-300">
+      <div class="p-3.5 overflow-y-auto flex-1 space-y-5">
+        
+        <!-- University Identity Header -->
+        <div class="p-3 rounded-xl bg-gradient-to-br from-indigo-500/10 via-obsidian-850 to-emerald-500/5 border border-white/10 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-lg bg-indigo-600/20 border border-indigo-500/40 flex items-center justify-center font-mono font-bold text-indigo-300 text-xs shadow-inner">
+              S5
+            </div>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <h1 class="text-xs font-bold tracking-tight text-white">FLSHM MOHAMMEDIA</h1>
+                <span class="text-[9px] font-mono px-1.5 py-0.2 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded">GR02</span>
+              </div>
+              <p class="text-[11px] text-zinc-400 font-mono">Études Anglaises • 26/27</p>
             </div>
           </div>
         </div>
 
-        <!-- Chat Input -->
-        <div class="p-3 border-t border-notion-border bg-zinc-900/60 flex gap-2">
-          <input id="aiInput" type="text" placeholder="Ask about any module or lesson..." 
-            class="flex-1 bg-notion-bg border border-notion-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
-            onkeydown="if(event.key==='Enter') handleAiSend()" />
-          <button onclick="handleAiSend()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-medium">
-            Send
+        <!-- Command Search Trigger -->
+        <button onclick="toggleCmdPalette()" class="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-obsidian-850 hover:bg-obsidian-800 border border-white/[0.07] text-xs text-zinc-400 transition group">
+          <span class="flex items-center gap-2">
+            <i data-lucide="command" class="w-3.5 h-3.5 text-zinc-500 group-hover:text-indigo-400 transition"></i>
+            <span>Quick Jump...</span>
+          </span>
+          <kbd class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/40 text-zinc-400 border border-white/10">Ctrl K</kbd>
+        </button>
+
+        <!-- Primary Views -->
+        <div class="space-y-1">
+          <div class="px-2 text-[10px] font-mono uppercase tracking-wider text-zinc-500 mb-1.5">Overview</div>
+          <button onclick="showDashboard()" id="nav-dashboard" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition bg-indigo-600/15 text-indigo-300 border border-indigo-500/30">
+            <span class="flex items-center gap-2.5">
+              <i data-lucide="layout-grid" class="w-4 h-4"></i>
+              <span>S5 Hub & Timetable</span>
+            </span>
+            <span class="text-[10px] font-mono text-indigo-400">LIVE</span>
+          </button>
+        </div>
+
+        <!-- 6 Semester 5 Modules -->
+        <div>
+          <div class="px-2 flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-zinc-500 mb-2">
+            <span>Semester 5 Modules (6)</span>
+            <span>GR02</span>
+          </div>
+          <nav id="moduleNav" class="space-y-1.5"></nav>
+        </div>
+      </div>
+
+      <!-- Sidebar Footer: Split-Screen Tools -->
+      <div class="p-3 border-t border-white/[0.07] bg-obsidian-950/60 space-y-2">
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="openDrawer('spider')" class="flex flex-col items-start p-2.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/25 transition group">
+            <div class="flex items-center justify-between w-full mb-1">
+              <i data-lucide="radar" class="w-4 h-4 text-indigo-400"></i>
+              <span class="text-[9px] font-mono px-1 rounded bg-indigo-500/20 text-indigo-300">TOOL</span>
+            </div>
+            <span class="text-xs font-semibold text-white">Spider-Crawler</span>
+            <span class="text-[10px] text-zinc-400">Web Summarizer</span>
+          </button>
+
+          <button onclick="openDrawer('ai')" class="flex flex-col items-start p-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 transition group">
+            <div class="flex items-center justify-between w-full mb-1">
+              <i data-lucide="sparkles" class="w-4 h-4 text-emerald-400"></i>
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            </div>
+            <span class="text-xs font-semibold text-white">S5 AI Tutor</span>
+            <span class="text-[10px] text-zinc-400">24/7 Module Agent</span>
           </button>
         </div>
       </div>
     </aside>
 
-  </div>
-
-  <!-- BOTTOM PERSISTENT BAR: STUDY PLAYLIST + POMODORO TIMER -->
-  <footer class="h-14 bg-notion-sidebar border-t border-notion-border px-6 flex items-center justify-between z-20">
-    <!-- Left: Audio Player -->
-    <div class="flex items-center gap-4">
-      <button onclick="toggleAudio()" id="playBtn" class="w-9 h-9 rounded-full bg-indigo-600 hover:bg-indigo-500 flex items-center justify-center text-white shadow">
-        <i data-lucide="play" class="w-4 h-4"></i>
-      </button>
-      <div>
-        <div class="flex items-center gap-2">
-          <span class="text-xs font-medium text-white" id="trackTitle">Lo-Fi Chill Study Beats</span>
-          <span class="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400">PERSISTENT AUDIO</span>
+    <!-- CENTER WORKSPACE -->
+    <main class="flex-1 flex flex-col overflow-y-auto relative">
+      
+      <!-- Sticky Top Glass Header -->
+      <header class="h-13 border-b border-white/[0.07] px-6 py-2.5 flex items-center justify-between sticky top-0 glass-panel z-10">
+        <div class="flex items-center gap-3">
+          <button onclick="toggleSidebar()" class="p-1.5 rounded-lg hover:bg-white/5 text-zinc-400 hover:text-white transition" title="Toggle Sidebar">
+            <i data-lucide="panel-left" class="w-4 h-4"></i>
+          </button>
+          <div id="topBreadcrumbs" class="flex items-center gap-2 text-xs text-zinc-400">
+            <span class="text-white font-medium">FLSHM Semestre 5</span>
+            <span>/</span>
+            <span class="font-mono text-[11px] text-indigo-400">Groupe GR02 • Automne 2026/2027</span>
+          </div>
         </div>
-        <select id="streamSelect" onchange="changeStream(this.value)" class="bg-transparent text-[11px] text-zinc-400 focus:outline-none cursor-pointer">
-          <option value="https://stream.zeno.fm/0r0xa792kwzuv">🎧 Lo-Fi Focus Radio (24/7 Stream)</option>
-          <option value="https://ice1.somafm.com/dronezone-128-mp3">🌧️ Ambient Deep Focus (SomaFM)</option>
-          <option value="https://ice1.somafm.com/groovesalad-128-mp3">☕ Chill Downtempo Study Groove</option>
-        </select>
+
+        <div class="flex items-center gap-2">
+          <button onclick="copyLessonToSpider()" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-obsidian-850 hover:bg-obsidian-800 border border-white/10 text-zinc-200 flex items-center gap-1.5 transition" title="Copy current lesson text and open Spider-Crawler">
+            <i data-lucide="scissors" class="w-3.5 h-3.5 text-indigo-400"></i>
+            <span class="hidden sm:inline">Send to Spider-Crawler</span>
+          </button>
+          <button onclick="openDrawer('ai')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-200 flex items-center gap-1.5 transition">
+            <i data-lucide="bot" class="w-3.5 h-3.5 text-emerald-400"></i>
+            <span>Ask S5 AI</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- ================================================================= -->
+      <!-- VIEW 1: S5 DASHBOARD & OFFICIAL GR02 TIMETABLE                    -->
+      <!-- ================================================================= -->
+      <div id="dashboardView" class="max-w-6xl w-full mx-auto px-6 py-8 space-y-8">
+        
+        <!-- Hero Banner -->
+        <div class="p-6 rounded-2xl bg-gradient-to-r from-obsidian-900 via-obsidian-850 to-indigo-950/40 border border-white/10 relative overflow-hidden">
+          <div class="max-w-2xl space-y-2 relative z-10">
+            <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-[11px] font-mono">
+              <span>UNIVERSITÉ HASSAN II • FLSHM MOHAMMEDIA</span>
+              <span>•</span>
+              <span>2026/2027</span>
+            </div>
+            <h2 class="text-3xl sm:text-4xl font-serif tracking-wide text-white">
+              Tronc Commun Études Anglaises — Semestre 5
+            </h2>
+            <p class="text-xs sm:text-sm text-zinc-400 leading-relaxed">
+              Your centralized workspace for <strong class="text-zinc-200">Groupe GR02</strong>. Every module below is pre-organized with structured lecture notes, exam synthesis sheets, active-recall flashcards, visual diagrams, <strong class="text-indigo-300">Spider-Crawler</strong> summarization, and your <strong class="text-emerald-300">24/7 S5 AI Tutor</strong>.
+            </p>
+          </div>
+        </div>
+
+        <!-- Official Interactive GR02 Weekly Timetable -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+                <i data-lucide="calendar-clock" class="w-4 h-4 text-indigo-400"></i>
+                <span>Official Emploi du Temps — Semestre 5 (GR02)</span>
+              </h3>
+              <p class="text-xs text-zinc-400">Click any class block in the timetable to open its module workspace directly.</p>
+            </div>
+            <span id="liveDayBadge" class="text-xs font-mono px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-zinc-300"></span>
+          </div>
+
+          <div class="overflow-x-auto rounded-2xl border border-white/10 bg-obsidian-900/90 shadow-xl">
+            <table class="w-full text-left border-collapse min-w-[760px]">
+              <thead>
+                <tr class="border-b border-white/10 bg-obsidian-850 text-[11px] font-mono text-zinc-400">
+                  <th class="py-3 px-4 w-28">JOUR</th>
+                  <th class="py-3 px-3">08h30 – 10h30</th>
+                  <th class="py-3 px-3">10h30 – 12h30</th>
+                  <th class="py-3 px-3">12h30 – 14h30</th>
+                  <th class="py-3 px-3">14h30 – 16h30</th>
+                  <th class="py-3 px-3">16h30 – 18h30</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-white/[0.06] text-xs">
+                <!-- Lundi -->
+                <tr class="hover:bg-white/[0.01]">
+                  <td class="py-3.5 px-4 font-semibold text-zinc-300 font-mono">Lundi</td>
+                  <td class="p-2 text-zinc-600 font-mono text-[11px] text-center">—</td>
+                  <td class="p-2 text-zinc-600 font-mono text-[11px] text-center">—</td>
+                  <td class="p-2">
+                    <button onclick="openModule('applied-ling')" class="w-full text-left p-2.5 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 transition group">
+                      <div class="font-bold text-indigo-200 group-hover:text-white">APPLIED LINGUISTICS</div>
+                      <div class="text-[11px] text-indigo-300/80 font-mono mt-1">Salle 03 • Prof. MSADDEK</div>
+                    </button>
+                  </td>
+                  <td class="p-2">
+                    <button onclick="openModule('langues-etrangeres')" class="w-full text-left p-2.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/30 transition group">
+                      <div class="font-bold text-sky-200 group-hover:text-white">Langues étrangères (Anglais)</div>
+                      <div class="text-[11px] text-sky-300/80 font-mono mt-1">Salle 01 • TOUHAMI - OUAZZANI</div>
+                    </button>
+                  </td>
+                  <td class="p-2 text-zinc-600 font-mono text-[11px] text-center">—</td>
+                </tr>
+                <!-- Mardi -->
+                <tr class="hover:bg-white/[0.01]">
+                  <td class="py-3.5 px-4 font-semibold text-zinc-300 font-mono">Mardi</td>
+                  <td class="p-2 text-zinc-600 font-mono text-[11px] text-center">—</td>
+                  <td class="p-2">
+                    <button onclick="openModule('lit-19')" class="w-full text-left p-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 transition group">
+                      <div class="font-bold text-amber-200 group-hover:text-white">19th Century Literature</div>
+                      <div class="text-[10px] text-amber-300/90">Poetry, drama, fiction</div>
+                      <div class="text-[11px] text-amber-300/80 font-mono mt-1">Salle 10 • Prof. EL MAJDOUBI</div>
+                    </button>
+                  </td>
+                  <td class="p-2">
+                    <button onclick="openModule('gen-ling')" class="w-full text-left p-2.5 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 transition group">
+                      <div class="font-bold text-purple-200 group-hover:text-white">General Linguistics</div>
+                      <div class="text-[11px] text-purple-300/80 font-mono mt-1">Salle 01 • Prof. EL HILALI</div>
+                    </button>
+                  </td>
+                  <td class="p-2 text-zinc-600 font-mono text-[11px] text-center">—</td>
+                  <td class="p-2 text-zinc-600 font-mono text-[11px] text-center">—</td>
+                </tr>
+                <!-- Mercredi -->
+                <tr class="hover:bg-white/[0.01]">
+                  <td class="py-3.5 px-4 font-semibold text-zinc-300 font-mono">Mercredi</td>
+                  <td class="p-2 text-zinc-600 font-mono text-[11px] text-center">—</td>
+                  <td class="p-2 text-zinc-600 font-mono text-[11px] text-center">—</td>
+                  <td class="p-2 text-zinc-600 font-mono text-[11px] text-center">—</td>
+                  <td class="p-2">
+                    <button onclick="openModule('cultural-studies')" class="w-full text-left p-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 transition group">
+                      <div class="font-bold text-rose-200 group-hover:text-white">CULTURAL STUDIES</div>
+                      <div class="text-[11px] text-rose-300/80 font-mono mt-1">Amphi 1 EL YOUSSI • Prof. TAHA</div>
+                    </button>
+                  </td>
+                  <td class="p-2 text-zinc-600 font-mono text-[11px] text-center">—</td>
+                </tr>
+                <!-- Jeudi -->
+                <tr class="hover:bg-white/[0.01]">
+                  <td class="py-3.5 px-4 font-semibold text-zinc-300 font-mono">Jeudi</td>
+                  <td class="p-2 text-zinc-600 font-mono text-[11px] text-center">—</td>
+                  <td class="p-2">
+                    <button onclick="openModule('research-tech')" class="w-full text-left p-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 transition group">
+                      <div class="font-bold text-emerald-200 group-hover:text-white">ADVANCED RESEARCH TECHNIQUES</div>
+                      <div class="text-[11px] text-emerald-300/80 font-mono mt-1">Salle 01 • Prof. TABZA</div>
+                    </button>
+                  </td>
+                  <td class="p-2 text-zinc-600 font-mono text-[11px] text-center">—</td>
+                  <td class="p-2 text-zinc-600 font-mono text-[11px] text-center">—</td>
+                  <td class="p-2 text-zinc-600 font-mono text-[11px] text-center">—</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 6 Module Cards Grid -->
+        <div class="space-y-3">
+          <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+            <i data-lucide="layers" class="w-4 h-4 text-indigo-400"></i>
+            <span>All 6 Semester 5 Modules — Dedicated Study Workspaces</span>
+          </h3>
+          <div id="dashboardCards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </div>
       </div>
-      <audio id="studyAudio" preload="none" src="https://stream.zeno.fm/0r0xa792kwzuv"></audio>
-    </div>
 
-    <!-- Center: Pomodoro Focus Timer -->
-    <div class="flex items-center gap-3 bg-notion-bg px-4 py-1.5 rounded-full border border-notion-border">
-      <i data-lucide="timer" class="w-4 h-4 text-indigo-400"></i>
-      <span id="pomoDisplay" class="font-mono text-sm font-bold text-white">25:00</span>
-      <button onclick="togglePomo()" id="pomoBtn" class="text-xs px-2 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200">Start</button>
-      <button onclick="resetPomo()" class="text-xs text-zinc-500 hover:text-zinc-300">Reset</button>
-    </div>
-
-    <!-- Right: Status -->
-    <div class="text-xs text-zinc-400 hidden sm:flex items-center gap-2">
-      <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-      <span>Semester 5 Workspace Ready</span>
-    </div>
-  </footer>
-
-  <!-- APPLICATION DATA & LOGIC -->
-  <script>
-    // =========================================================================
-    // 1. YOUR 6 SEMESTER 5 MODULES DATABASE (Edit this to add lessons/pics/videos)
-    // =========================================================================
-    const MODULES_DATA = [
-      {
-        id: "mod-1",
-        name: "Module 1: Core Theory & Foundations",
-        icon: "book",
-        lessons: [
-          {
-            id: "m1-l1",
-            title: "Lesson 1: Key Frameworks & Concepts",
-            notes: `
-              <div class="p-4 rounded-xl bg-indigo-950/30 border border-indigo-500/30 text-indigo-200 mb-4">
-                <strong>💡 Notion Callout:</strong> Everything in Module 1 builds on these three foundational pillars. Use the <em>Spider-Crawler</em> drawer on the right to summarize external readings!
-              </div>
-              <h3 class="text-lg font-semibold text-white mb-2">1. Introduction to the Framework</h3>
-              <p class="mb-4">Replace this text with your full lecture notes for Module 1, Lesson 1. You can include bullet points, definitions, and structured study tables.</p>
-              <ul class="list-disc pl-5 space-y-2">
-                <li><strong>Concept A:</strong> Detailed explanation of the primary analytical method.</li>
-                <li><strong>Concept B:</strong> How structural forces shape the core text or system.</li>
-              </ul>
-            `,
-            summary: [
-              "Core definition and historical origin of the framework.",
-              "3 main differences between classical and modern approaches.",
-              "Exam Tip: Always contrast Concept A with Concept B in essay intros."
-            ],
-            videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-            pics: [
-              { caption: "Architecture & Concept Map Diagram", url: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80" }
-            ]
-          },
-          {
-            id: "m1-l2",
-            title: "Lesson 2: Applied Case Studies",
-            notes: `<p>Detailed case study notes for Module 1, Lesson 2 go here.</p>`,
-            summary: ["Key takeaway from Case Study 1.", "Methodology breakdown for exam review."],
-            videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-            pics: []
-          }
-        ]
-      },
-      {
-        id: "mod-2",
-        name: "Module 2: Research & Methodology",
-        icon: "compass",
-        lessons: [
-          {
-            id: "m2-l1",
-            title: "Lesson 1: Qualitative vs Quantitative Methods",
-            notes: `<p>Full breakdown of mixed-methods design, data collection, and analysis.</p>`,
-            summary: ["Qualitative focuses on depth and meaning; Quantitative focuses on measurable patterns.", "Triangulation combines both for higher validity."],
-            videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-            pics: []
-          }
-        ]
-      },
-      {
-        id: "mod-3",
-        name: "Module 3: Critical Analysis",
-        icon: "layers",
-        lessons: [
-          {
-            id: "m3-l1",
-            title: "Lesson 1: Discourse & Representation",
-            notes: `<p>Notes for Module 3, Lesson 1.</p>`,
-            summary: ["Key summary bullet 1", "Key summary bullet 2"],
-            videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-            pics: []
-          }
-        ]
-      },
-      {
-        id: "mod-4",
-        name: "Module 4: Advanced Systems",
-        icon: "cpu",
-        lessons: [
-          {
-            id: "m4-l1",
-            title: "Lesson 1: System Architecture Overview",
-            notes: `<p>Notes for Module 4, Lesson 1.</p>`,
-            summary: ["Core system components", "Performance bottlenecks"],
-            videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-            pics: []
-          }
-        ]
-      },
-      {
-        id: "mod-5",
-        name: "Module 5: Comparative Studies",
-        icon: "globe-2",
-        lessons: [
-          {
-            id: "m5-l1",
-            title: "Lesson 1: Cross-Cultural Perspectives",
-            notes: `<p>Notes for Module 5, Lesson 1.</p>`,
-            summary: ["Comparative framework overview", "Key thinkers and texts"],
-            videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-            pics: []
-          }
-        ]
-      },
-      {
-        id: "mod-6",
-        name: "Module 6: Seminar & Capstone",
-        icon: "award",
-        lessons: [
-          {
-            id: "m6-l1",
-            title: "Lesson 1: Final Project Guidelines",
-            notes: `<p>Notes and rubrics for your Semester 5 capstone module.</p>`,
-            summary: ["Proposal deadline and structure", "Citation and bibliography standards"],
-            videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-            pics: []
-          }
-        ]
-      }
-    ];
-
-    let currentModule = MODULES_DATA[0];
-    let currentLesson = MODULES_DATA[0].lessons[0];
-    let currentTab = 'notes';
-
-    // =========================================================================
-    // 2. RENDER SIDEBAR & WORKSPACE
-    // =========================================================================
-    function renderSidebar(filterText = "") {
-      const nav = document.getElementById("moduleNav");
-      nav.innerHTML = "";
-
-      MODULES_DATA.forEach((mod) => {
-        const filteredLessons = mod.lessons.filter(l =>
-          l.title.toLowerCase().includes(filterText.toLowerCase()) ||
-          mod.name.toLowerCase().includes(filterText.toLowerCase())
-        );
-        if (filterText && filteredLessons.length === 0) return;
-
-        const modBlock = document.createElement("div");
-        modBlock.className = "mb-2";
-        modBlock.innerHTML = `
-          <div class="flex items-center gap-2 px-2 py-1.5 text-xs font-semibold text-zinc-300">
-            <i data-lucide="${mod.icon}" class="w-3.5 h-3.5 text-indigo-400"></i>
-            <span class="truncate">${mod.name}</span>
-          </div>
-          <div class="pl-4 space-y-0.5 mt-0.5">
-            ${filteredLessons.map(lesson => `
-              <button onclick="selectLesson('${mod.id}', '${lesson.id}')"
-                class="w-full text-left px-2.5 py-1.5 rounded-md text-xs transition flex items-center justify-between ${
-                  currentLesson.id === lesson.id 
-                    ? 'bg-indigo-600/20 text-indigo-300 font-medium border border-indigo-500/30' 
-                    : 'text-zinc-400 hover:bg-zinc-800/70 hover:text-zinc-200'
-                }">
-                <span class="truncate">${lesson.title}</span>
-              </button>
-            `).join("")}
-          </div>
-        `;
-        nav.appendChild(modBlock);
-      });
-      lucide.createIcons();
-    }
-
-    function selectLesson(modId, lessonId) {
-      currentModule = MODULES_DATA.find(m => m.id === modId);
-      currentLesson = currentModule.lessons.find(l => l.id === lessonId);
-      renderSidebar(document.getElementById("searchInput").value);
-      renderLessonContent();
-    }
-
-    function switchLessonTab(t
+      <!-- ================================================================= -->
+      <!-- VIEW 2: INDIVIDUAL MODULE & LESSON WORKSPACE                      -->
+      <!-- ================================================================= -->
+      <div id="lessonView" class="max-w-5xl w-full mx-auto px-6 py-8 hidden space-y-6">
+        
+        <!-- Module Header Banner -->
+        <div class="p-6 rounded-2xl bg-obsidian-900 border border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div class="space-y-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <span id="modScheduleBadge" class="text-[11px] font-mono px-2.5 py-0.5 rounded-md bg-indigo-500/15 text-indigo-300 border border-indigo-500/30"></span>
+              <span id="modProfBadge" class="text-[11px] font-mono px-2.5 py-0.5 rounded-md bg-white/5 text-zinc-300 border border-white/10"></span>
+              <span 
